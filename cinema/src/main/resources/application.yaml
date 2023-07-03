@@ -1,0 +1,16 @@
+spring:
+   datasource:
+      username: cinema
+      password: cinema
+      url: jdbc:mysql://localhost:3306/cinema
+      
+      
+   jpa:
+      hibernate:
+         ddl-auto: update
+         show-sql: true
+         defer-datasource-initalization: true
+         
+   sql:
+      init:
+         mode: always
