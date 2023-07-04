@@ -9,14 +9,20 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import cinema.controller.model.CinemaData;
+import cinema.controller.model.CinemaData.CinemaEmployee;
 import cinema.dao.CinemaDao;
+import cinema.dao.EmployeeDao;
 import cinema.entity.Cinema;
+import cinema.entity.Employee;
 
 @Service
 public class CinemaService {
 	
 	@Autowired
 	private CinemaDao cinemaDao;
+	
+	@Autowired
+	private EmployeeDao employeeDao;
 
 	@Transactional(readOnly = false)
 	public CinemaData saveCinema(CinemaData cinemaData) {
@@ -49,6 +55,8 @@ public class CinemaService {
 		Cinema cinema;
 		if(Objects.isNull(cinemaId)) {
 			cinema = new Cinema();
+			
+			
 		} else {
 			cinema = findCinemaById(cinemaId);
 		}
@@ -78,5 +86,48 @@ public class CinemaService {
 		return new CinemaData(cinema);
 		
 	}
+	
+//Employee
+	@Transactional(readOnly = false)
+	public CinemaEmployee saveEmployee(Long cinemaId, CinemaEmployee cinemaEmployee) {
+		Cinema cinema = findCinemaById(cinemaId);
+		Long employeeId = cinemaEmployee.getEmployeeId();
+		Employee employee = findOrCreateEmployee(cinemaId, employeeId);
+		
+		copyEmployeeFields(employee, cinemaEmployee);
+		
+		employee.setCinema(cinema);
+		cinema.getEmployees().add(employee);
+		
+		Employee dbEmployee = employeeDao.save(employee);
+		
+		return new CinemaEmployee(dbEmployee);
+	}
+
+	private void copyEmployeeFields(Employee employee, CinemaEmployee cinemaEmployee) {
+	employee.setEmployeeFirstName(employee.getEmployeeFirstName());
+	employee.setEmployeeLastName(employee.getEmployeeLastName());
+	employee.setEmployeePhone(employee.getEmployeePhone());
+	employee.setEmployeeJobTitle(employee.getEmployeeJobTitle());
+}
+
+	private Employee findOrCreateEmployee(Long cinemaId, Long employeeId) {
+	if(Objects.isNull(employeeId)) {
+		return new Employee();
+	} 
+	return findEmployeeById(cinemaId, employeeId);
+}
+
+	@Transactional(readOnly = true)
+	private Employee findEmployeeById(Long cinemaId, Long employeeId) {
+	Employee employee = employeeDao.findById(employeeId).orElseThrow(()->
+		new NoSuchElementException("Employee with ID=" + employeeId + " was not found."));
+	
+	if(employee.getCinema().getCinemaId() != cinemaId) {
+		throw new IllegalArgumentException
+			("Employee with ID=" + employeeId + " is not an employee at this cinema with ID= " + cinemaId);
+	}
+	return employee;
+}
 
 }
