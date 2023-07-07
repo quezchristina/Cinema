@@ -51,16 +51,6 @@ public class Cinema {
 	@OneToMany(mappedBy = "cinema", cascade = CascadeType.ALL, orphanRemoval = true)
 	private Set<Employee> employees = new HashSet<>();
 	
-//	Join Column table
-//	set shows
-//	many to many relationship
-	@EqualsAndHashCode.Exclude
-	@ToString.Exclude
-	@ManyToMany(cascade = CascadeType.PERSIST)
-	@JoinTable(name = "cinema_show", 
-	joinColumns = @JoinColumn (name = "cinema_id"), 
-	inverseJoinColumns = @JoinColumn (name = "show_id"))
-			
-	private Set<Show> shows = new HashSet<>();
+
 	
 }

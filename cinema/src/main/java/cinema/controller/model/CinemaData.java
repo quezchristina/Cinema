@@ -6,7 +6,6 @@ import java.util.Set;
 import cinema.entity.Cinema;
 import cinema.entity.Customer;
 import cinema.entity.Employee;
-import cinema.entity.Show;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -24,7 +23,7 @@ public class CinemaData {
 	
 	private Set<CinemaCustomer> customers = new HashSet<>();
 	private Set<CinemaEmployee> employees = new HashSet<>();
-	private Set<CinemaShow> shows = new HashSet<>();
+	
 	
 	public CinemaData(Cinema cinema) {
 		cinemaId = cinema.getCinemaId();
@@ -46,10 +45,7 @@ public class CinemaData {
 			employees.add(new CinemaEmployee (employee));
 //			cinemaEmployees.add(new Employee (employee));
 	
-			//loop for show
-			for (Show show: cinema.getShows()) {
-				shows.add(new CinemaShow(show));
-			}
+			
 		}
 	}
 	@Data
@@ -82,22 +78,7 @@ public class CinemaData {
 			employeeFirstName = employee.getEmployeeFirstName();
 			employeeLastName = employee.getEmployeeLastName();
 			employeeJobTitle = employee.getEmployeeJobTitle();
-		}
-	}
-	//put shows
-	@Data
-	@NoArgsConstructor
-	public static class CinemaShow {
-		private Long showId;
-		private String showName;
-		private String showTime;
-		private String showGenre;
-		
-		public CinemaShow (Show show) {
-			showId = show.getShowId();
-			showName = show.getShowName();
-			showTime = show.getShowTime();
-			showGenre = show.getShowGenre();
+			employeePhone = employee.getEmployeePhone();
 		}
 	}
 

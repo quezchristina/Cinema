@@ -9,10 +9,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import cinema.controller.model.CinemaData;
+import cinema.controller.model.CinemaData.CinemaCustomer;
 import cinema.controller.model.CinemaData.CinemaEmployee;
 import cinema.dao.CinemaDao;
+import cinema.dao.CustomerDao;
 import cinema.dao.EmployeeDao;
 import cinema.entity.Cinema;
+import cinema.entity.Customer;
 import cinema.entity.Employee;
 
 @Service
@@ -23,6 +26,9 @@ public class CinemaService {
 	
 	@Autowired
 	private EmployeeDao employeeDao;
+	
+	@Autowired
+	private CustomerDao customerDao;
 
 	@Transactional(readOnly = false)
 	public CinemaData saveCinema(CinemaData cinemaData) {
@@ -70,6 +76,7 @@ public class CinemaService {
 			new NoSuchElementException("Cinema with ID =" + cinemaId + " was not found"));
 		
 	}
+	
 	@Transactional(readOnly = true)
 	public List<CinemaData> retrieveAllCinemas() {
 		//@formatter:off
@@ -84,7 +91,11 @@ public class CinemaService {
 	public CinemaData retrieveCinemaById(Long cinemaId) {
 		Cinema cinema = findCinemaById(cinemaId);
 		return new CinemaData(cinema);
-		
+	}
+	
+	public void deleteCinemaById(Long cinemaId) {
+		Cinema cinema = findCinemaById(cinemaId);
+		cinemaDao.delete(cinema);
 	}
 	
 //Employee
@@ -105,17 +116,12 @@ public class CinemaService {
 	}
 
 	private void copyEmployeeFields(Employee employee, CinemaEmployee cinemaEmployee) {
-	employee.setEmployeeFirstName(employee.getEmployeeFirstName());
-	employee.setEmployeeLastName(employee.getEmployeeLastName());
-	employee.setEmployeePhone(employee.getEmployeePhone());
-	employee.setEmployeeJobTitle(employee.getEmployeeJobTitle());
-}
-
-	private Employee findOrCreateEmployee(Long cinemaId, Long employeeId) {
-	if(Objects.isNull(employeeId)) {
-		return new Employee();
-	} 
-	return findEmployeeById(cinemaId, employeeId);
+	employee.setEmployeeFirstName(cinemaEmployee.getEmployeeFirstName());
+	employee.setEmployeeLastName(cinemaEmployee.getEmployeeLastName());
+	employee.setEmployeeId(cinemaEmployee.getEmployeeId());
+	employee.setEmployeeJobTitle(cinemaEmployee.getEmployeeJobTitle());
+	employee.setEmployeePhone(cinemaEmployee.getEmployeePhone());
+	
 }
 
 	@Transactional(readOnly = true)
@@ -129,5 +135,65 @@ public class CinemaService {
 	}
 	return employee;
 }
+
+	private Employee findOrCreateEmployee(Long cinemaId, Long employeeId) {
+		if(Objects.isNull(employeeId)) {
+			return new Employee();
+		} 
+		return findEmployeeById(cinemaId, employeeId);
+	}
+	
+//CUSTOMER
+	@Transactional(readOnly = false)
+	public CinemaCustomer saveCustomer(Long cinemaId, CinemaCustomer cinemaCustomer) {
+		Cinema cinema = findCinemaById(cinemaId);
+		Long customerId = cinemaCustomer.getCustomerId();
+		Customer customer = findOrCreateCustomer(cinemaId, customerId);
+		
+		copyCustomerFields(customer, cinemaCustomer);
+		
+		customer.getCinema().add(cinema);
+		cinema.getCustomers().add(customer);
+		
+		Customer dbCustomer = customerDao.save(customer);
+		
+		return new CinemaCustomer(dbCustomer);
+
+	}
+
+	private void copyCustomerFields(Customer customer, CinemaCustomer cinemaCustomer) {
+		customer.setCustomerId(cinemaCustomer.getCustomerId());
+		customer.setCustomerFirstName(cinemaCustomer.getCustomerFirstName());
+		customer.setCustomerLastName(cinemaCustomer.getCustomerLastName());
+		customer.setCustomerEmail(cinemaCustomer.getCustomerEmail());
+		
+	}
+
+	private Customer findOrCreateCustomer(Long cinemaId, Long customerId) {
+		if(Objects.isNull(customerId)) {
+			return new Customer();
+		}
+		return findCustomerById(cinemaId, customerId);
+	}
+
+	private Customer findCustomerById(Long cinemaId, Long customerId) {
+		Customer customer = customerDao.findById(customerId).orElseThrow(()-> 
+			new NoSuchElementException("Customer with ID=" + customerId + " was not found."));
+		
+		boolean found = false;
+		
+		for(Cinema cinema : customer.getCinema()) {
+			if(cinema.getCinemaId() == cinemaId) {
+				found = true;
+				break;
+			}
+		}
+		if(!found) {
+			throw new IllegalArgumentException("Cusotmer with ID =" + customerId +
+					" is not a customer at this cinema with ID=" + cinemaId);
+		}
+		return customer;
+	}
+	
 
 }
